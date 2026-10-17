@@ -1,0 +1,8 @@
+172.17.0.1 - - [17/Oct/2026:23:51:04 +0000] "GET /login HTTP/1.1" 200 493 "-" "Python-urllib/3.12"
+[2026-10-17 23:51:02 +0000] [1] [INFO] Starting gunicorn 26.2.0
+[2026-10-17 23:51:02 +0000] [1] [INFO] Listening at: http://0.0.0.0:5000 (1)
+[2026-10-17 23:51:02 +0000] [1] [INFO] Using worker: sync
+[2026-10-17 23:51:02 +0000] [7] [INFO] Booting worker with pid: 7
+[2026-10-17 23:51:02 +0000] [8] [INFO] Booting worker with pid: 8
+[2026-10-17 23:51:02 +0000] [1] [ERROR] Control server error: [Errno 30] Read-only file system: '/home/taskflow'
+10001:10001 true [ALL]

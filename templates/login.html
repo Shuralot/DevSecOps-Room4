@@ -1,0 +1,8 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>TaskFlow Login</title>
+<h1>TaskFlow</h1>
+<form method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Usuário <input name="username" required autocomplete="username"></label>
+<label>Senha <input type="password" name="password" required autocomplete="current-password"></label>
+<button>Entrar</button>
+</form><p>{{ error or '' }}</p></html>

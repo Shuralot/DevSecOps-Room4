@@ -1,0 +1,6 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Nova tarefa</title>
+<h1>Nova tarefa</h1><form method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Título <input name="title" maxlength="200" required></label>
+<label>Descrição <textarea name="description"></textarea></label>
+<button>Salvar</button></form></html>

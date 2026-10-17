@@ -1,0 +1,62 @@
+[
+  {
+    "check_id": "python.flask.security.audit.hardcoded-config.avoid_hardcoded_config_SECRET_KEY",
+    "path": "codigo\\app-exemplo\\app.py",
+    "line": 28,
+    "message": "Hardcoded variable `SECRET_KEY` detected. Use environment variables or config files instead"
+  },
+  {
+    "check_id": "python.flask.security.injection.tainted-sql-string.tainted-sql-string",
+    "path": "codigo\\app-exemplo\\app.py",
+    "line": 101,
+    "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries."
+  },
+  {
+    "check_id": "python.flask.security.injection.tainted-sql-string.tainted-sql-string",
+    "path": "codigo\\app-exemplo\\app.py",
+    "line": 145,
+    "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries."
+  },
+  {
+    "check_id": "python.django.security.injection.raw-html-format.raw-html-format",
+    "path": "codigo\\app-exemplo\\app.py",
+    "line": 163,
+    "message": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`django.shortcuts.render`) which will safely render HTML instead."
+  },
+  {
+    "check_id": "python.flask.security.injection.raw-html-concat.raw-html-format",
+    "path": "codigo\\app-exemplo\\app.py",
+    "line": 163,
+    "message": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`flask.render_template`) which will safely render HTML instead."
+  },
+  {
+    "check_id": "python.flask.security.audit.directly-returned-format-string.directly-returned-format-string",
+    "path": "codigo\\app-exemplo\\app.py",
+    "line": 170,
+    "message": "Detected Flask route directly returning a formatted string. This is subject to cross-site scripting if user input can reach the string. Consider using the template engine instead and rendering pages with 'render_template()'."
+  },
+  {
+    "check_id": "python.django.security.injection.raw-html-format.raw-html-format",
+    "path": "codigo\\app-exemplo\\app.py",
+    "line": 170,
+    "message": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`django.shortcuts.render`) which will safely render HTML instead."
+  },
+  {
+    "check_id": "python.flask.security.injection.raw-html-concat.raw-html-format",
+    "path": "codigo\\app-exemplo\\app.py",
+    "line": 170,
+    "message": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`flask.render_template`) which will safely render HTML instead."
+  },
+  {
+    "check_id": "python.flask.security.audit.app-run-param-config.avoid_app_run_with_bad_host",
+    "path": "codigo\\app-exemplo\\app.py",
+    "line": 227,
+    "message": "Running flask app with host 0.0.0.0 could expose the server publicly."
+  },
+  {
+    "check_id": "python.flask.security.audit.debug-enabled.debug-enabled",
+    "path": "codigo\\app-exemplo\\app.py",
+    "line": 227,
+    "message": "Detected Flask app with debug=True. Do not deploy to production with this flag enabled as it will leak sensitive information. Instead, consider using Flask configuration variables or setting 'debug' using system environment variables."
+  }
+]

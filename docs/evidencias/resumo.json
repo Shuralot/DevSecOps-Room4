@@ -1,0 +1,13 @@
+{
+  "semgrep_after": 0,
+  "source_commit": "0875fdf1e0d6de5b4fe3ef20fb75646235238343",
+  "semgrep_before": 10,
+  "trivy_version": "0.69.3",
+  "date": "2026-10-17",
+  "trivy_after_high_critical": 0,
+  "tests_passed": 6,
+  "merge_block_demo": "pendente",
+  "github_runs": "pendentes",
+  "trivy_before_high_critical": 388,
+  "semgrep_version": "1.181.0"
+}
