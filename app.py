@@ -18,6 +18,8 @@ ferramenta especifica da esteira e corrigida em uma versao "fixed" do codigo.
 """
 
 import sqlite3
+import os
+
 
 from flask import Flask, g, redirect, request, session, url_for
 
@@ -29,7 +31,7 @@ app = Flask(__name__)
 _secret_key = os.environ.get("TASKFLOW_SECRET_KEY")
 if not _secret_key:
     raise RuntimeError(
-        "Variavel de ambiente TASKFLOW_SECRET_KEY nao foi definida. "
+        "Variavel de ambiente TASKFLOW_SECRET_KEY nao foi definida."
         "Configure-a antes de iniciar a aplicacao "
         "(ex: export TASKFLOW_SECRET_KEY='valor-aleatorio-e-longo')."
     )

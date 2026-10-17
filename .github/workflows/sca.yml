@@ -39,7 +39,7 @@ jobs:
       - name: Instalar pip-audit
         run: pip install pip-audit
 
-      - name: Auditar requirements.txt do app-exemplo
+      - name: Auditar requirements.txt
         run: pip-audit -r requirements.txt
         # Sem flags extras, pip-audit retorna exit code != 0 assim que
         # encontra qualquer vulnerabilidade conhecida (CVE) em qualquer
