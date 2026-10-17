@@ -1,9 +1,11 @@
 name: Container
+# Verifica PRs antes da integração, main após push e execução manual.
 on:
   pull_request:
   push:
     branches: [main]
   workflow_dispatch:
+# O token só precisa ler o repositório; não concedemos escrita por padrão.
 permissions:
   contents: read
 env:
@@ -16,6 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
+      # SHA fixa o código da action; o Dependabot propõe atualizações.
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: docker build --file "$DOCKERFILE" --tag "$IMAGE_TAG" .
       - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
@@ -23,13 +26,16 @@ jobs:
           version: 'v0.69.3'
           image-ref: ${{ env.IMAGE_TAG }}
           severity: ${{ env.TRIVY_SEVERITY }}
+          # HIGH/CRITICAL causa falha, que deve ser um check obrigatório na main.
           exit-code: '1'
           format: table
-      - name: Verificar inicialização e runtime
+      - name: Verificar inicializaÃ§Ã£o e runtime
         run: |
+          # Chave aleatória e efêmera: não usar uma credencial real no teste.
           export TASKFLOW_SECRET_KEY="$(openssl rand -hex 32)"
           docker run --rm -e TASKFLOW_SECRET_KEY "$IMAGE_TAG" flask --app 'app:create_app()' init-db
           docker run -d --name taskflow-test --read-only --cap-drop=ALL --security-opt=no-new-privileges --tmpfs /tmp:rw,noexec,nosuid,size=64m -e TASKFLOW_SECRET_KEY -e TASKFLOW_HTTPS=0 -p 127.0.0.1:5000:5000 "$IMAGE_TAG"
+          # Limpa o container mesmo se a verificação HTTP falhar.
           trap 'docker logs taskflow-test; docker rm -f taskflow-test' EXIT
           for attempt in $(seq 1 20); do
             if curl --fail --silent http://127.0.0.1:5000/login > /dev/null; then exit 0; fi

@@ -6,11 +6,13 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import create_app, get_db, init_db
 
+# Credencial efêmera dos testes; não é uma conta da aplicação.
 TEST_PASSWORD = secrets.token_urlsafe(24)
 
 
 @pytest.fixture
 def app(tmp_path):
+    # Cada teste tem um SQLite temporário e dois usuários para verificar isolamento.
     app = create_app({"TESTING": True, "SECRET_KEY": secrets.token_hex(32),
                       "DATABASE": str(tmp_path / "test.db"), "SESSION_COOKIE_SECURE": False})
     with app.app_context():
@@ -53,6 +55,7 @@ def test_sql_injection_does_not_authenticate(app):
 
 
 def test_search_isolates_users(app):
+    # Uma tentativa de SQLi não pode revelar a tarefa do outro usuário.
     client = app.test_client()
     login(client)
     response = client.get("/tasks", query_string={"q": "' OR 1=1 --"})
@@ -62,6 +65,7 @@ def test_search_isolates_users(app):
 
 
 def test_task_xss_escaped(app):
+    # O conteúdo é salvo, mas deve voltar como texto escapado, sem executar HTML.
     client = app.test_client()
     login(client)
     result = client.post("/tasks/new", data={"csrf_token": token(client, "/tasks/new"),
