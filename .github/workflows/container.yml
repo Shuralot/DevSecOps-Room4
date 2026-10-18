@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 20
     steps:
       # SHA fixa o código da action; o Dependabot propõe atualizações.
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: docker build --file "$DOCKERFILE" --tag "$IMAGE_TAG" .
       - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         with:
