@@ -1,5 +1,5 @@
 # Versão e digest fixam a base; Alpine reduz a quantidade de pacotes do SO.
-FROM python:3.12.13-alpine3.23@sha256:601d3d3797e90e2534782e69c85fafb7971b43f24c7b1b079b7e48dd435e458d
+FROM python:3.14.8-alpine3.23@sha256:e7cff362a12454395f8dc99607c21a602ea880cdce03538877b90c2ba932b16f
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     TASKFLOW_DATABASE=/app/data/taskflow.db
