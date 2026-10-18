@@ -1,0 +1,5 @@
+# Falsos positivos: identificador público GPG da imagem oficial Python.
+# Não é chave privada nem credencial. Exceções limitadas aos fingerprints exatos.
+759df1639c8a1017da7bb8db2a4628e3f034d7bf:docs/evidencias/history-after.txt:generic-api-key:17
+759df1639c8a1017da7bb8db2a4628e3f034d7bf:docs/evidencias/trivy-after.json:generic-api-key:68
+759df1639c8a1017da7bb8db2a4628e3f034d7bf:docs/evidencias/trivy-after.json:generic-api-key:187

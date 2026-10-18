@@ -43,3 +43,7 @@ Para analisar o original com Semgrep, copiar codigo/app-exemplo/app.py para uma 
 Execuções reais no GitHub Actions, proteção da main, PR com merge bloqueado, acesso do professor e repositório privado ainda dependem de publicação e configuração pelo proprietário.
 
 Hardening de SO/Lynis precisa ser executado em uma VM Linux de laboratório autorizada, não no Windows nem em um container fingindo auditar o host. Na VM: instalar Lynis, executar sudo lynis audit system, registrar versão e saídas /var/log/lynis.log e /var/log/lynis-report.dat em docs/evidencias/ após revisar dados sensíveis; aplicar correções pertinentes e comparar nova auditoria. Não foram produzidos resultados de Lynis nesta máquina.
+
+## Triagem do Gitleaks no PR
+
+O Gitleaks 8.24.3 do GitHub encontrou três ocorrências de GPG_KEY nos metadados da imagem oficial Python, reproduzidos nos relatórios. O valor é um identificador público de chave para verificação de assinaturas, não material privado de autenticação. .gitleaksignore aceita somente os três fingerprints específicos do commit 759df1, sem desativar a regra generic-api-key e sem excluir arquivos inteiros. Novos achados continuam reprovando o gate.
