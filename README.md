@@ -11,7 +11,7 @@ Repositório unificado de Engenharia de Software / DevSecOps cobrindo a esteira 
 * **@gustavolucen4** — Gustavo Lucena Silva
 * **@fabalmeida** — Felipe Almeida
 * **@holandalelis** — Pedro Holanda Lelis
-* *(Colaborador / Coautor)*: **@diegobuarquebr** — Diego Buarque
+* *Professor*: **@diegobuarquebr** — Diego Buarque
 
 ---
 
