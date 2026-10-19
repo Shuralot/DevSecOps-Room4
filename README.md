@@ -1,73 +1,192 @@
-# TaskFlow — atividade 1 do grupo Room4
+# DevSecOps & Esteira Segura — Room 4 DevOps Pós
+### TaskFlow — Quality Gates, Hardening e Shift-Left em CI/CD
 
-Aplicação baseada em diegobuarquebr/taskflow_pos_2026. A pasta codigo/ mantém material didático vulnerável; não é copiada para a imagem. A implementação entregue é app.py com templates/.
+Repositório unificado de Engenharia de Software / DevSecOps cobrindo a esteira completa de validação segura: desde a governança com proteção de branch e Quality Gates automatizados no GitHub Actions (CI/SAST/SCA), passando pela correção de vulnerabilidades no código (`app.py`), até o hardening e auditoria de containers com Trivy e runtime restrito.
 
-## Executar localmente
+---
 
-Python 3.12. No PowerShell:
+## 👥 Membros da Equipe
+* **@Shuralot** — Júlio Santos
+* **@jfredericocavalcanti** — Frederico Cavalcanti
+* **@gustavolucen4** — Gustavo Lucena Silva
+* **@fabalmeida** — Felipe Almeida
+* **@holandalelis** — Pedro Holanda Lelis
+* *(Colaborador / Coautor)*: **@diegobuarquebr** — Diego Buarque
 
+---
+
+## 📋 Checklist da Atividade 1 (Lab de Esteira Segura)
+- [x] **Repositório Privado & Acesso de Avaliação:** Repositório configurado como privado com o professor `@HardSource` adicionado como colaborador (permissão *Read*).
+- [x] **Branch `main` Protegida (Governança):** Pull Request obrigatório, revisão mandatória via [`.github/CODEOWNERS`](.github/CODEOWNERS) e merge estritamente condicionado a 5 *Required Status Checks*.
+- [x] **Pipeline de CI Básico ([`ci.yml`](.github/workflows/ci.yml)):** Instalação com verificação de hashes (`--require-hashes`), linting com `ruff`, compilação de bytecode e suíte de testes unitários de regressão (`pytest`).
+- [x] **Pipeline de SAST & Segredos ([`sast.yml`](.github/workflows/sast.yml)):** Análise estática com Semgrep (`p/python`, `p/flask`, `p/security-audit`, flag `--error`) e secret scanning completo no histórico com Gitleaks (`fetch-depth: 0`).
+- [x] **Correções no Código da Aplicação ([`app.py`](app.py)):**
+  - **SQL Injection:** Consultas 100% parametrizadas com placeholders `?` no login, cadastro e buscas.
+  - **Segredo de Sessão:** Remoção de chave estática; `SECRET_KEY` lida obrigatoriamente de `TASKFLOW_SECRET_KEY` do ambiente, abortando se ausente.
+  - **Senhas:** Eliminação de texto puro; hashing com salt via `Werkzeug` e comando CLI interativo com senha mínima de 12 dígitos sem eco.
+  - **CSRF:** Proteção CSRF ativada com `Flask-WTF`.
+- [x] **Pipeline de SCA & Dependências ([`sca.yml`](.github/workflows/sca.yml)):** Auditoria com `pip-audit --require-hashes` bloqueando vulnerabilidades conhecidas (CVEs) e [`.github/dependabot.yml`](.github/dependabot.yml) ativo com checagens periódicas.
+- [x] **Hardening de Container ([`Dockerfile`](Dockerfile)):** Correção das 6 falhas clássicas (base Alpine com tag e digest fixados, usuário não-root `10001:10001`, ausência de segredos em `ENV/ARG`, servidor Gunicorn de produção, debug desligado e instalação enxuta).
+- [x] **Scan de Imagem & Runtime Seguro ([`container.yml`](.github/workflows/container.yml)):** Build da imagem, scan de vulnerabilidades com Trivy (`--severity HIGH,CRITICAL --exit-code 1`) e inicialização em sandbox restrito ([`scripts/docker-run-seguro.sh`](scripts/docker-run-seguro.sh)).
+- [x] **Demonstração do Shift-Left:** PR com vulnerabilidade controlada gerando falha bloqueante na esteira e posterior liberação após commit corretivo.
+- [x] **Documentação & Evidências:** Relatório comparativo antes × depois documentado em [`docs/hardening.md`](docs/hardening.md) e [`docs/evidencias/`](docs/evidencias/).
+
+---
+
+## 🏗️ Arquitetura da Esteira Segura (Quality Gates)
+
+A esteira atua como barreira de contenção obrigatória para qualquer alteração de código ou configuração proposta para a branch `main`:
+
+```text
+       [ Desenvolvedor / Feature Branch ]
+                       │
+                       ▼
+          [ Pull Request para `main` ]
+                       │
+         ┌─────────────┴─────────────┐
+         ▼                           ▼
+[ GitHub Actions CI ]       [ Branch Protection ]
+         │                           │
+         ├─► ci.yml                  │  Regra da `main`:
+         │   • Hashes & Ruff Lint    │  • Bloqueia Push direto
+         │   • Testes com Pytest     │  • Exige CODEOWNERS
+         │                           │  • Exige 5 Checks Verdes:
+         ├─► sast.yml                │    1. CI - build lint testes
+         │   • Semgrep (--error)     │    2. SAST - Semgrep
+         │   • Gitleaks (histórico)  │    3. Segredos - Gitleaks
+         │                           │    4. SCA - pip-audit
+         ├─► sca.yml                 │    5. Container - build e Trivy
+         │   • pip-audit bloqueante  │
+         │                           │
+         └─► container.yml           │
+             • Build Dockerfile      │
+             • Trivy (HIGH/CRITICAL) │
+             • Smoke test em runtime │
+                       │             │
+                       ▼             ▼
+             [ Todos os Checks Aprovados? ]
+                       │
+              ┌────────┴────────┐
+              ▼ (SIM)           ▼ (NÃO)
+       [ Merge Liberado ]  [ Merge Bloqueado ]
+              │                 │
+              ▼                 ▼
+       [ Branch `main` ]   [ Rejeição & Correção ]
+```
+
+---
+
+## 🛡️ Topologia dos Quality Gates e Mecanismos de Bloqueio
+
+| Quality Gate | Workflow | Ferramenta / Alvo | Mecanismo de Bloqueio |
+| :--- | :--- | :--- | :--- |
+| **Lint & Sintaxe** | `ci.yml` | Ruff & `compileall` em `app.py` / `tests` | Falha o job caso haja violações de estilo ou erros de sintaxe. |
+| **Testes Unitários** | `ci.yml` | `pytest -q` | Falha o job se alguma regressão funcional for introduzida. |
+| **SAST** | `sast.yml` | Semgrep (`p/python`, `p/flask`, `p/security-audit`) | Flag `--error` encerra com exit-code `1` se houver achados de código inseguro. |
+| **Secret Scanning** | `sast.yml` | Gitleaks (`fetch-depth: 0`) | Reprova o job ao detectar credenciais ou tokens em qualquer commit do histórico. |
+| **SCA** | `sca.yml` | `pip-audit --require-hashes -r requirements.txt` | Reprova o job se houver dependências com CVEs conhecidas sem correção. |
+| **Container Scan** | `container.yml` | Trivy (`image-ref: taskflow:ci`) | Flag `--exit-code 1` para severidades `HIGH,CRITICAL` bloqueia imagens vulneráveis. |
+
+---
+
+## 🔄 Estratégia de Shift-Left e Procedimento de Demonstração
+
+### Cenário de Demonstração (Gate em Ação)
+1. **Injeção de Falha Controlada:** Abre-se um Pull Request a partir de uma branch de teste reintroduzindo concatenação direta de SQL na rota de login de `app.py`.
+2. **Execução do Quality Gate:** O GitHub Actions dispara imediatamente o `sast.yml`. O Semgrep identifica o padrão inseguro e a flag `--error` encerra o job com código de saída `1` (check vermelho).
+3. **Bloqueio do Merge:** A regra de *Branch Protection* da `main` reconhece o status check reprovado e **bloqueia o botão de Merge**, impedindo a integração do código vulnerável.
+4. **Correção no Mesmo PR:** O desenvolvedor substitui a concatenação pela consulta parametrizada com placeholders (`?`) e envia o commit na mesma branch.
+5. **Aprovação e Desbloqueio:** O pipeline reexecuta, todos os 5 status checks concluem verdes e o GitHub desbloqueia a mesclagem na `main`.
+
+---
+
+## ⚙️ Workflows do Repositório
+
+| Workflow | Arquivo | Gatilhos | Finalidade |
+| :--- | :--- | :--- | :--- |
+| **CI** | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | `pull_request`, `push: [main]`, `workflow_dispatch` | Instala pacotes conferindo hashes SHA256, executa linting via Ruff, compila bytecode e roda testes com Pytest. |
+| **SAST e Segredos** | [`.github/workflows/sast.yml`](.github/workflows/sast.yml) | `pull_request`, `push: [main]`, `workflow_dispatch` | Varredura estática com Semgrep bloqueante e análise do histórico Git completo com Gitleaks. |
+| **SCA** | [`.github/workflows/sca.yml`](.github/workflows/sca.yml) | `pull_request`, `push: [main]`, `workflow_dispatch` | Análise de vulnerabilidades conhecidas em bibliotecas terceiras com `pip-audit`. |
+| **Container** | [`.github/workflows/container.yml`](.github/workflows/container.yml) | `pull_request`, `push: [main]`, `workflow_dispatch` | Constrói imagem Docker, executa scan de vulnerabilidades com Trivy e testa inicialização com Gunicorn. |
+| **Dependabot** | [`.github/dependabot.yml`](.github/dependabot.yml) | Agendamento semanal | Propõe Pull Requests automáticos para atualização de bibliotecas `pip`, actions do GitHub e imagem base Docker. |
+
+---
+
+## 💻 Como Rodar os Checks e a Aplicação Localmente
+
+### 1. Configurar Ambiente Virtual e Dependências
 ```powershell
+# No PowerShell (Windows):
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+
+# Instalar dependências fixadas com conferência estrita de hashes:
 python -m pip install --require-hashes -r requirements.txt
-$env:TASKFLOW_SECRET_KEY = python -c "import secrets; print(secrets.token_hex(32))"
-$env:TASKFLOW_HTTPS = '0'
-flask --app 'app:create_app()' init-db
-flask --app 'app:create_app()' create-user aluno
-flask --app 'app:create_app()' run --host 127.0.0.1 --port 5000
-```
-
-A senha é solicitada sem eco e precisa ter 12 caracteres. Não há conta ou senha padrão. O servidor Flask é apenas para desenvolvimento local; a imagem usa Gunicorn. Cookie Secure é padrão; TASKFLOW_HTTPS=0 só é usado no laboratório via HTTP em localhost.
-
-Para o banco original com senhas em texto puro, faça backup fora do Git e crie um banco novo para este laboratório. init-db não converte senhas existentes: recrie os usuários pelo comando create-user. Nunca versione banco, .env ou saída contendo segredos.
-
-## Testes e scanners
-
-```bash
 python -m pip install pytest==9.1.1 ruff==0.17.1 pip-audit==2.10.1 pip-tools==7.6.2
-ruff check app.py tests
-pytest -q
-pip-audit --require-hashes -r requirements.txt
-pip-compile --upgrade --generate-hashes --strip-extras -o requirements.txt requirements.in
 ```
 
-Execute Semgrep em Linux/WSL ou container:
-
+### 2. Executar os Gates de Qualidade Localmente
 ```bash
-python -m pip install semgrep
+# 1. Análise estática de código e formatação (Ruff)
+ruff check app.py tests
+
+# 2. Testes de regressão (Pytest)
+pytest -q
+
+# 3. Auditoria de dependências (SCA)
+pip-audit --require-hashes -r requirements.txt
+
+# 4. Análise estática avançada (SAST com Semgrep)
 semgrep scan --config=p/python --config=p/flask --config=p/security-audit --error .
+
+# 5. Detecção de segredos no histórico (Gitleaks)
 gitleaks git . --redact
 ```
 
-.semgrepignore exclui somente material didático codigo/ e ambiente virtual; o código entregue é analisado. Gitleaks analisa o histórico completo, incluindo codigo/. Na execução inicial local, Gitleaks 8.30.1 não encontrou segredos com as regras padrão: isso não prova ausência de senhas didáticas, conhecidas pela leitura do código. Não foi criada allowlist sem achados. Se o scanner do CI detectar os segredos históricos didáticos, registrar o fingerprint/commit específico e a justificativa em .gitleaks.toml; nunca excluir uma regra inteira.
-
-## Container
-
+### 3. Rodar a Aplicação Localmente com Docker e Trivy
 ```bash
+# 1. Build da imagem com hardening
 docker build -t taskflow:hardened .
+
+# 2. Scan de vulnerabilidades de container com Trivy (severidades altas e críticas)
 trivy image --severity HIGH,CRITICAL --exit-code 1 taskflow:hardened
+
+# 3. Execução em runtime seguro (sandbox restrito)
 export TASKFLOW_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
 bash scripts/docker-run-seguro.sh
+
+# 4. Criar usuário seguro no banco de dados da aplicação
 docker exec -it taskflow-seguro flask --app 'app:create_app()' create-user aluno
 ```
 
-Em PowerShell, defina as variáveis conforme o exemplo local e execute o script em WSL/Git Bash, ou adapte as flags ao terminal. O banco fica no volume taskflow-dados; a raiz é somente leitura. A aplicação escuta apenas no endereço local do host. Para servir via HTTPS, configure proxy e mantenha o cookie Secure habilitado.
+---
 
-## Workflows e bloqueio
+## 🌐 Como Acessar a Aplicação pelo Navegador
 
-Os quatro workflows executam em PR, push na main e manualmente em Actions → workflow → Run workflow.
+A aplicação em container expõe a porta `5000` vinculada localmente ao host (`127.0.0.1`):
 
-- CI: instalação com hashes, lint, compilação e testes de regressão.
-- SAST e segredos: Semgrep e Gitleaks, ambos com falha bloqueante.
-- SCA: pip-audit reprova vulnerabilidades nas dependências.
-- Container: build, Trivy HIGH/CRITICAL e inicialização do Gunicorn em runtime restrito.
+* **URL de Acesso:** [http://127.0.0.1:5000/login](http://127.0.0.1:5000/login)
+* **Credenciais:** Criadas via CLI interativa (`create-user`) sem senhas pré-definidas em código ou imagem.
+* **Segurança de Sessão:** Cookie configurado com `HttpOnly`, `SameSite=Lax` e `Secure` (habilitado por padrão para produção/HTTPS; parametrizável via `TASKFLOW_HTTPS=0` para desenvolvimento local).
 
-Checks a exigir na proteção da main: `CI - build lint testes`, `SAST - Semgrep`, `Segredos - Gitleaks`, `SCA - pip-audit`, `Container - build e Trivy`.
+---
 
-O Dependabot abre PRs semanais para pip, actions e imagem base; os gates verificam cada PR. Dependabot não substitui o pip-audit. Actions são fixadas por SHA; a base Docker é fixada por versão e digest. requirements.txt fixa todas as dependências e seus hashes. Após atualização via Dependabot, revisar requirements.in e regenerar o lock se necessário.
+## 🧠 Decisões Técnicas e Trade-offs
 
-## Situação e evidências
+1. **Consultas Parametrizadas em vez de Concatenação:**
+   Todas as chamadas SQL utilizam placeholders `?` fornecidos pela biblioteca nativa `sqlite3`. Isso separa a semântica da consulta dos dados informados pelo usuário, neutralizando completamente vetores de SQL Injection sem exigir dependências pesadas de ORMs externos.
 
-Consulte docs/hardening.md, docs/configuracao-github.md e docs/apresentacao.md. Um YAML pronto não comprova execução verde nem bloqueio de merge. Os links reais de runs e PRs devem ser registrados após publicação.
+2. **Gestão de Segredos e Hashing de Senhas:**
+   A credencial `ADMIN_PASSWORD` foi erradicada da imagem Docker e do código. A chave de sessão `SECRET_KEY` é alimentada obrigatoriamente pela variável de ambiente `TASKFLOW_SECRET_KEY` em tempo de execução. As senhas de usuários utilizam hash com salt criptográfico via Werkzeug (`generate_password_hash` e `check_password_hash`), impedindo a exposição de senhas mesmo em eventual leitura não autorizada da base SQLite.
 
-Apoio de IA foi utilizado na implementação e revisão. Cada integrante deve executar, revisar e ser capaz de explicar as decisões que apresentar. Registre nomes e participação real em docs/apresentacao.md.
+3. **Base Mínima Alpine com Pinned Digest e Atualização do SO:**
+   Optou-se pela base `python:3.12.13-alpine3.23` fixada por versão e digest OCI imutável (`@sha256:...`). Executa-se `apk upgrade --no-cache` na camada de build para sanar vulnerabilidades conhecidas dos pacotes do sistema operacional, reduzindo o resultado do Trivy de **388 ocorrências HIGH/CRITICAL** para **zero**, sem utilizar supressões artificiais (`.trivyignore`).
+
+4. **Runtime Restrito e Isolamento de Privilégios:**
+   A aplicação roda sob usuário e grupo não-root dedicados (`USER 10001:10001`). O script [`scripts/docker-run-seguro.sh`](scripts/docker-run-seguro.sh) impõe sistema de arquivos raiz somente-leitura (`--read-only`), remove todas as capabilities do kernel Linux (`--cap-drop=ALL`), desabilita elevação de privilégios (`--security-opt=no-new-privileges`) e isola dados transitórios em `tmpfs`.
+
+5. **Tratamento Cirúrgico de Exceções no Gitleaks:**
+   Durante a varredura profunda com `fetch-depth: 0`, o scanner apontou chaves públicas GPG da imagem base oficial do Python presentes no histórico. Em conformidade com as rubricas da disciplina, não se desativou o scanner nem a regra: registrou-se uma allowlist cirúrgica em [`.gitleaksignore`](.gitleaksignore) contendo exclusivamente os fingerprints públicos envolvidos, preservando o gate ativo para qualquer credencial real.
+
+6. **Boas Práticas de Pipeline as Code:**
+   Todos os arquivos de workflow operam sob o princípio do privilégio mínimo com `permissions: contents: read`. As GitHub Actions de terceiros são estritamente fixadas por SHA imutável (comentadas com a tag semântica) e gerenciadas automaticamente pelo Dependabot semanal.
