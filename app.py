@@ -100,12 +100,10 @@ def create_app(test_config=None):
     def login():
         error = None
         if request.method == "POST":
-            # O placeholder ? separa a instrução SQL do valor informado pelo usuário.
-            # Mesmo uma entrada como SQL continua sendo tratada como dado.
-            user = get_db().execute(
-                "SELECT * FROM users WHERE username = ?",
-                (request.form.get("username", ""),),
-            ).fetchone()
+            # VULNERABILIDADE CONTROLADA DE DEMONSTRAÇÃO: Concatenação direta de SQL
+            username = request.form.get("username", "")
+            query = f"SELECT * FROM users WHERE username = '{username}'"
+            user = get_db().execute(query).fetchone()
             # A biblioteca verifica a senha contra o hash armazenado.
             if user and check_password_hash(user["password"], request.form.get("password", "")):
                 # Descarta o estado anterior antes de criar a sessão autenticada.
