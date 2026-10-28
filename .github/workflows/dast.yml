@@ -54,12 +54,14 @@ jobs:
 
       # Gate passivo: -I não bloqueia WARN, mas qualquer regra FAIL do rules.tsv bloqueia.
       # Sem continue-on-error: o check vermelho é o que trava o merge.
+      # "-c" explícito: a action só repassa rules_file_name ao ZAP se o arquivo tiver alguma
+      # regra IGNORE. O nosso não tem, então sem o -c todo FAIL virava WARN e nada bloqueava.
       - name: ZAP Baseline (passivo)
         uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
         with:
           target: ${{ env.TARGET }}
           rules_file_name: .zap/rules.tsv
-          cmd_options: '-a -j -I'
+          cmd_options: '-a -j -I -c .zap/rules.tsv'
           fail_action: true
           allow_issue_writing: false
           artifact_name: zap-baseline-report
@@ -72,7 +74,7 @@ jobs:
         with:
           target: ${{ env.TARGET }}
           rules_file_name: .zap/rules.tsv
-          cmd_options: '-a -j -I -m 2 -T 10'
+          cmd_options: '-a -j -I -m 2 -T 10 -c .zap/rules.tsv'
           fail_action: true
           allow_issue_writing: false
           artifact_name: zap-full-scan-report

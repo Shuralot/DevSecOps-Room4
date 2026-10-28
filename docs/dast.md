@@ -15,6 +15,7 @@ O workflow é o [`.github/workflows/dast.yml`](../.github/workflows/dast.yml) e 
 - O ZAP roda com `-I`: alerta **WARN** aparece no relatório mas não bloqueia.
 - Qualquer regra marcada **FAIL** devolve exit code 1, e o `fail_action: true` deixa o check vermelho.
 - Não existe `continue-on-error` em nenhum passo.
+- O `rules.tsv` é passado ao ZAP com `-c` explícito no `cmd_options`. As actions do ZAP só repassam o `rules_file_name` quando o arquivo tem alguma regra IGNORE. O nosso não tem nenhuma, e sem o `-c` todo FAIL virava WARN no CI, ou seja, o gate não bloqueava nada.
 - Nenhuma regra está como IGNORE. As rebaixadas para WARN têm justificativa na 3ª coluna do arquivo.
 
 **Trade-off:** com `-I`, um alerta novo que não esteja na lista de FAIL não bloqueia o merge, só aparece no relatório. Escolhemos isso para o gate não ficar vermelho por alertas informativos (10111, 10112, 10109), mas as categorias que importam (injeção, headers, cookies, CSRF, debug) estão explicitamente como FAIL.
