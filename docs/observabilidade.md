@@ -89,3 +89,14 @@ Rodamos `scripts/simular-forca-bruta.sh http://127.0.0.1:8080 admin 25`. A consu
 ```
 
 São 25 falhas em 5 minutos, vindas de um único IP. O `172.19.0.1` é o gateway da rede Docker, ou seja, o host que disparou o script. A consulta 6 retornou 0 linhas.
+
+### Evidência no Grafana
+
+Nova execução com 2 × 40 tentativas (`scripts/simular-forca-bruta.sh http://127.0.0.1:8080 admin 40`). O IP aparece como `172.18.0.1`, o gateway da rede Docker nesta subida da stack.
+
+![Dashboard TaskFlow - Segurança e Login durante a força bruta](evidencias/atividade-2/grafana-forca-bruta.jpg)
+
+- **Painel 1:** a série de `172.18.0.1` passa da linha vermelha do gatilho (>10) e chega a 80 falhas na janela de 5 min.
+- **Painel 2** (a query de disparo do runbook): lista `172.18.0.1` com 80.
+- **Painel 4** (login com sucesso): *No data*, ou seja, o ataque não teve sucesso e a severidade fica Média.
+- **Painel 6:** os eventos `login_failed` com `request_id`, sem senha. A busca por `senha-errada` em todos os logs não retornou nada.
