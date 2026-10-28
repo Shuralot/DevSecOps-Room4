@@ -85,6 +85,21 @@ def test_csrf_required_and_debug_removed(app):
     assert app.debug is False
 
 
+def test_csrf_flag_only_disables_when_explicit(monkeypatch, tmp_path, capsys):
+    # TASKFLOW_CSRF=0 é só para o DAST: sem a variável, a proteção continua ligada.
+    monkeypatch.setenv("TASKFLOW_SECRET_KEY", secrets.token_hex(32))
+    monkeypatch.delenv("TASKFLOW_CSRF", raising=False)
+    assert create_app().config["WTF_CSRF_ENABLED"] is True
+    monkeypatch.setenv("TASKFLOW_CSRF", "0")
+    scan_app = create_app({"DATABASE": str(tmp_path / "scan.db")})
+    assert scan_app.config["WTF_CSRF_ENABLED"] is False
+    assert "csrf_disabled" in capsys.readouterr().out
+    # O formulário continua com o campo do token, então a regra 10202 do ZAP segue válida.
+    with scan_app.app_context():
+        init_db()
+    assert 'name="csrf_token"' in scan_app.test_client().get("/login").get_data(as_text=True)
+
+
 def test_missing_secret_fails(monkeypatch):
     monkeypatch.delenv("TASKFLOW_SECRET_KEY", raising=False)
     with pytest.raises(RuntimeError):

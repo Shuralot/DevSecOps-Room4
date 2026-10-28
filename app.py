@@ -132,6 +132,9 @@ def create_app(test_config=None):
         MAX_CONTENT_LENGTH=64 * 1024,
         # Debug só por variável explícita e desligado por padrão (Módulo 4).
         DEBUG=os.environ.get("TASKFLOW_DEBUG", "0") == "1",
+        # Ligado por padrão. Só o container do DAST usa TASKFLOW_CSRF=0, para os payloads
+        # do ZAP chegarem aos sinks em vez de pararem no 400 do CSRF (docs/dast.md).
+        WTF_CSRF_ENABLED=os.environ.get("TASKFLOW_CSRF", "1") != "0",
     )
     if test_config:
         app.config.update(test_config)
@@ -139,6 +142,9 @@ def create_app(test_config=None):
     # Falhar sem chave evita iniciar com uma chave previsível de fallback.
     if not app.config["SECRET_KEY"]:
         raise RuntimeError("Defina TASKFLOW_SECRET_KEY antes de iniciar.")
+    # Fica visível no log (e no Loki) se alguém subir assim fora do scan.
+    if not app.config["WTF_CSRF_ENABLED"]:
+        log_event("csrf_disabled", logging.WARNING)
     # Atrás do proxy do Compose, o IP real vem do X-Forwarded-For de UM salto confiável.
     trusted_proxies = int(os.environ.get("TASKFLOW_TRUSTED_PROXIES", "0"))
     if trusted_proxies:

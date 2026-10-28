@@ -28,3 +28,4 @@
 10111	WARN	Authentication Request Identified: informativo, o ZAP só marca o formulário de login.
 10112	WARN	Session Management Response Identified: informativo, marca o cookie de sessão.
 10106	WARN	HTTP Only Site: o runner não tem TLS; em produção o acesso é só HTTPS (SG libera apenas 443).
+20012	WARN	Anti-CSRF Tokens Check (ativo): o container do DAST sobe com TASKFLOW_CSRF=0 para o XSS ser testado de forma estável. A validação do token é garantida por test_csrf_required_and_debug_removed no CI.

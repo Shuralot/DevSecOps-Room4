@@ -31,10 +31,12 @@ jobs:
           docker run --rm -e TASKFLOW_SECRET_KEY -v taskflow-dast:/app/data "$IMAGE_TAG" \
             flask --app 'app:create_app()' init-db
           # Mesmo runtime restrito do Compose: read-only, sem capabilities, debug desligado.
+          # TASKFLOW_CSRF=0 só aqui: com o CSRF ligado, o ZAP reenvia tokens velhos, leva 400
+          # e o payload de XSS nunca chega ao template (scan instável). Ver docs/dast.md.
           docker run -d --name taskflow-dast --read-only --cap-drop=ALL \
             --security-opt=no-new-privileges --tmpfs /tmp:rw,noexec,nosuid,size=64m \
             -v taskflow-dast:/app/data -e TASKFLOW_SECRET_KEY -e TASKFLOW_HTTPS=0 \
-            -e TASKFLOW_DEBUG=0 -p 127.0.0.1:5000:5000 "$IMAGE_TAG"
+            -e TASKFLOW_DEBUG=0 -e TASKFLOW_CSRF=0 -p 127.0.0.1:5000:5000 "$IMAGE_TAG"
 
       - name: Espera ativa até a aplicação responder em /login
         run: |
